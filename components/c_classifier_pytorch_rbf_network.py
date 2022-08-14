@@ -20,8 +20,8 @@ def grad_norm(loss, inputs):
 
 def gPenalty(inputs, loss, lam, q):
     # Gradient penalty
-    # bs, d_in = inputs.size()
-    g = grad(loss, inputs, create_graph=True)[0]  # * bs
+    bs, d_in = inputs.size()
+    g = grad(loss, inputs, create_graph=True)[0] * bs
     qnorms = g.norm(q, 1)
     # lam = lam * math.pow(d_in, 1. - 1. / q)
     return lam * qnorms.mean()  # / 2.

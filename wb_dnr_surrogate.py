@@ -1,3 +1,6 @@
+from secml.ml import CClassifierSVM
+from secml.ml.classifiers.multiclass import CClassifierMulticlassOVA
+
 from wb_nr_surrogate import CClassifierRejectSurrogate
 
 
@@ -27,8 +30,14 @@ class CClassifierDNRSurrogate(CClassifierRejectSurrogate):
             # 1. Reduce gammas:
             # - Layer classifiers:
             for l in self._clf_rej._layers:
+                l_clf = self._clf_rej._layer_clfs[l]
                 # - Reduce kernel gamma
-                self._clf_rej._layer_clfs[l].kernel.gamma /= self._gamma_smooth
+                if type(l_clf) == CClassifierSVM:
+                    l_clf.kernel.gamma /= self._gamma_smooth
+                elif type(l_clf) == CClassifierMulticlassOVA:
+                    # Need to go through clf._binary_classifiers
+                    for b_clf in l_clf._binary_classifiers:
+                        b_clf.kernel.gamma /= self._gamma_smooth
             # - Collector
             self._clf_rej._clf.kernel.gamma /= self._gamma_smooth
 
@@ -38,13 +47,19 @@ class CClassifierDNRSurrogate(CClassifierRejectSurrogate):
             # 3. Restore gammas:
             # - Layer classifiers:
             for l in self._clf_rej._layers:
-                # - Reduce kernel gamma
-                self._clf_rej._layer_clfs[l].kernel.gamma *= self._gamma_smooth
+                l_clf = self._clf_rej._layer_clfs[l]
+                if type(l_clf) == CClassifierSVM:
+                    l_clf.kernel.gamma *= self._gamma_smooth
+                elif type(l_clf) == CClassifierMulticlassOVA:
+                    # Need to go through clf._binary_classifiers
+                    for b_clf in l_clf._binary_classifiers:
+                        b_clf.kernel.gamma *= self._gamma_smooth
             # - Collector
             self._clf_rej._clf.kernel.gamma *= self._gamma_smooth
 
             # DEBUG: DOUBLE CHECK
             restored_grad = self._clf_rej.gradient(self._cached_x, w)
-            assert (orig_grad-restored_grad).norm() < 1e-8, "Something wrong here!"
+            grad_delta = (orig_grad - restored_grad).norm()
+            assert grad_delta < 1e-8, "Something wrong here (Gradient delta:{:.0e})!".format(grad_delta)
 
         return grad

@@ -16,14 +16,20 @@ from wb_dnr_surrogate import CClassifierDNRSurrogate
 from wb_nr_surrogate import CClassifierRejectSurrogate
 
 # TODO: Set this!
+# CLF = 'dnn'
 # CLF = 'nr'
 # CLF = 'dnr_rbf_tr_init'
 # CLF = os.path.join('ablation_study', 'rbfnet_100_fixed_betas')
 # CLF = os.path.join('ablation_study', 'rbfnet_5127_tr_samples')
 # CLF = os.path.join('ablation_study', 'rbf_net_nr_sv_100_wd_0e+00')
-CLF = 'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init'
+# CLF = 'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init'
+# CLF = 'shallow_fader'
+# CLF = 'tsne_rej'
+CLF = 'tnr'
 
 USE_SMOOTHING = False
+GAMMA_SMOOTHING = 100
+
 N_SAMPLES = 100
 N_PLOTS = 10
 
@@ -38,13 +44,13 @@ elif CLF == 'nr' or CLF == 'tsne_rej':
     # NR
     clf = CClassifierRejectThreshold.load(CLF+'.gz')
     if USE_SMOOTHING:
-        clf = CClassifierRejectSurrogate(clf, gamma_smoothing=10)
+        clf = CClassifierRejectSurrogate(clf, gamma_smoothing=GAMMA_SMOOTHING)
 elif 'dnr' in CLF or CLF == 'tnr':
     # DNR
     clf = CClassifierDNR.load(CLF+'.gz')
     if USE_SMOOTHING:
-        clf = CClassifierDNRSurrogate(clf, gamma_smoothing=10)
-elif "rbf_net" in CLF or "rbfnet" in CLF:
+        clf = CClassifierDNRSurrogate(clf, gamma_smoothing=GAMMA_SMOOTHING)
+elif "rbf_net" in CLF or "rbfnet" in CLF or 'fader' in CLF:
     # DEBUG: DUPLICATED CODE TO AVOID SMOOTHING
     if USE_SMOOTHING:
         print("WARNING: SMOOTHING ACTIVATED! (IGNORING)")
@@ -70,7 +76,7 @@ tr_sample = vl[tr_idxs, :]
 
 # Defining attack
 noise_type = 'l2'   # Type of perturbation 'l1' or 'l2'
-dmax = 2.0          # Maximum perturbation
+dmax = 2.0         # Maximum perturbation
 lb, ub = 0., 1.     # Bounds of the attack space. Can be set to `None` for unbounded
 y_target = None     # None if `error-generic` or a class label for `error-specific`
 
@@ -78,7 +84,7 @@ y_target = None     # None if `error-generic` or a class label for `error-specif
 solver_params = {
     'eta': 0.1,
     'eta_min': 0.1,
-    # 'eta_pgd': 0.1,
+    'eta_pgd': 0.05,
     'max_iter': 40,
     'eps': 1e-6
 }
@@ -93,8 +99,12 @@ pgd_attack = CAttackEvasionPGDExp(classifier=clf,
                                   y_target=y_target)
 pgd_attack.verbose = 2  # DEBUG
 
-# # HACK: Setting 'n_jobs' param
-# pgd_attack.n_jobs = 1
+# Parallelize?
+pgd_attack.n_jobs = 10
+
+# Enable surrogate logging?
+if type(clf) == CClassifierDNRSurrogate:
+    clf.verbose = 1
 
 # Attack N_SAMPLES
 # sample = ts[:N_SAMPLES, :]
@@ -116,6 +126,7 @@ not_evading_samples = sample[(eva_y_pred == sample.Y).logical_or(eva_y_pred == -
 selected = not_evading_samples
 # not_evading_samples.save("not_evading_wb_"+CLF)
 
+pgd_attack.n_jobs = 1
 N = min(selected.X.shape[0], N_PLOTS)
 if N > 0:
     fig = CFigure(height=5*N, width=16)

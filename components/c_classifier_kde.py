@@ -14,11 +14,12 @@ from secml.ml.classifiers import CClassifier
 from secml.ml.classifiers.clf_utils import convert_binary_labels
 from secml.ml.features import CNormalizerMinMax
 from secml.ml.kernels import CKernel
+from secml.ml.peval.metrics import CMetric
 
 
 class CClassifierKDE(CClassifier):
     """Kernel Density Estimator
-    
+
     Parameters
     ----------
     kernel : None or CKernel subclass, optional
@@ -112,12 +113,12 @@ class CClassifierKDE(CClassifier):
                              "or binary datasets only. If dataset is binary "
                              "only negative class are considered.")
 
-        negative_samples_idx = y.find(y == 0)
+        positive_samples_idx = y.find(y == 1)
 
-        if negative_samples_idx is None:
-            raise ValueError("training set must contain same negative samples")
+        if positive_samples_idx is None:
+            raise ValueError("training set must contain some positive samples")
 
-        self._training_samples = X[negative_samples_idx, :]
+        self._training_samples = X[positive_samples_idx, :]
 
         self.logger.info("Number of training samples: {:}"
                          "".format(self._training_samples.shape[0]))
@@ -143,8 +144,13 @@ class CClassifierKDE(CClassifier):
         x = x.atleast_2d()  # Ensuring input is 2-D
         s = self.kernel.k(x, self._training_samples)
         s = CArray(s).mean(keepdims=False, axis=1)
-        s = s.append(1.0 - s, axis=0).T     # Make it 2 classes
-        return s
+        # # DEBUG: ATTENZIONE! s NON E' UNA PROBABILITA'! (non posso fare 1.0-s!)
+        # s = s.append(1.0 - s, axis=0).T     # Make it 2 classes
+        scores = CArray.ones(shape=(x.shape[0], self.n_classes))
+        scores[:, 0] = 1.0-s.ravel().T
+        scores[:, 1] = s.ravel().T
+
+        return scores
 
     def _backward(self, w):
         """Computes the gradient of the KDE classifier's decision function
@@ -152,11 +158,19 @@ class CClassifierKDE(CClassifier):
         """
         k = self.kernel.gradient(self._cached_x)
         # Gradient sign depends on input label (0/1)
-        return - convert_binary_labels(w.argmax()) * k.mean(axis=0)
+        return convert_binary_labels(w.argmax()) * k.mean(axis=0)
+
+    @property
+    def bandwidth(self):
+        return 1/self.kernel.gamma
+
+    @bandwidth.setter
+    def bandwidth(self, v):
+        self.kernel.gamma = 1/v
 
 
 if __name__ == '__main__':
-    random_state = 999
+    random_state = 998
     # Create test data
     dataset = CDLRandom(n_features=2,
                         n_redundant=0,
@@ -167,34 +181,38 @@ if __name__ == '__main__':
 
     # Instantiate classifier
     kde = CClassifierKDE(kernel='rbf')
-    # kde.kernel.gamma = 10
+    kde.bandwidth = 0.1
 
-    # Let's create a 3-Fold data splitter
-    from secml.data.splitter import CDataSplitterKFold
-    xval_splitter = CDataSplitterKFold(num_folds=3, random_state=random_state)
-
-    # Test estimate parameter
-    kde.verbose = 1
-    best_params = kde.estimate_parameters(dataset,
-                                          parameters={'kernel.gamma': [1e-2, 1e-1, 1e0, 1e1, 1e2]},
-                                          splitter=xval_splitter,
-                                          metric='accuracy')
-    print("The best training parameters are: ",
-          [(k, best_params[k]) for k in sorted(best_params)])
+    # # Let's create a 3-Fold data splitter
+    # from secml.data.splitter import CDataSplitterKFold
+    # xval_splitter = CDataSplitterKFold(num_folds=3, random_state=random_state)
+    #
+    # # Test estimate parameter
+    # kde.verbose = 1
+    # best_params = kde.estimate_parameters(dataset,
+    #                                       parameters={'kernel.gamma': [1e-2, 1e-1, 1e0, 1e1, 1e2]},
+    #                                       splitter=xval_splitter,
+    #                                       metric='accuracy')
+    # print("The best training parameters are: ",
+    #       [(k, best_params[k]) for k in sorted(best_params)])
 
     # Retrain classifier
     kde.fit(dataset.X, dataset.Y)
 
     # Predict
-    s = kde.decision_function(dataset.X[:10, :])
-    p = kde.predict(dataset.X[:10, :])
+    s = kde.decision_function(dataset.X)
+    p = kde.predict(dataset.X)
+
+    acc = CMetric.create('accuracy').performance_score(dataset.Y, p)
+    print("Model Accuracy: {}".format(acc))
 
     # Test plot
     fig = CFigure()
     fig.sp.plot_ds(dataset)
     fig.sp.plot_decision_regions(kde)
-    fig.title('kde Classifier')
-    fig.savefig('c_classifier_kde.png')
+    fig.title('KDE Classifier - $h$ = {:.0e}'.format(kde.bandwidth))
+    fig.show()
+    # fig.savefig('c_classifier_kde.png')
 
     # Test gradient
     x = dataset.X[0, :]
@@ -207,7 +225,7 @@ if __name__ == '__main__':
     from secml.ml.classifiers.tests.c_classifier_testcases import CClassifierTestCases
 
     CClassifierTestCases.setUpClass()
-    CClassifierTestCases()._test_gradient_numerical(kde, dataset.X[10, :])
+    CClassifierTestCases()._test_gradient_numerical(kde, dataset.X[-1, :])
 
     print("done?")
 

@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from secml.array import CArray
 from secml.data.loader import CDLRandomBlobs
 from secml.data.splitter import CTrainTestSplit
 from secml.figure import CFigure
@@ -93,13 +94,16 @@ class MLPytorch(CClassifierPyTorch):
     def _check_input(self, x, y=None):
         return x, y
 
-    # def _fit(self, x, y):
-    #     # Storing dataset classes
-    #     # TODO: CHECK POSSIBLE NON-FLAT SHAPES!
-    #     self._n_features = x.shape[1]
-    #     self._classes = CArray.arange(y.shape[1])
-    #
-    #     return super()._fit(x, y)
+    def _fit(self, x, y):
+        # Storing dataset classes
+        # TODO: CHECK POSSIBLE NON-FLAT SHAPES!
+        self._n_features = x.shape[1]
+        if len(y.shape) > 1:
+            self._classes = CArray.arange(y.shape[1])
+        else:
+            self._classes = y.unique()
+
+        return super()._fit(x, y)
 
 
 if __name__ == '__main__':
@@ -144,6 +148,7 @@ if __name__ == '__main__':
 
     # Predict
     y_pred = clf.predict(ts.X)
+    acc = CMetricAccuracy().performance_score(ts.Y, y_pred)
     acc = CMetricAccuracy().performance_score(ts.Y, y_pred)
     print("Accuracy of PyTorch Model: {:}".format(acc))
 

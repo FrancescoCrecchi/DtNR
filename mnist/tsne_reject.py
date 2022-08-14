@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     # Setting best params (external xval)
     clf.set_params({
-        'kernel.gamma': 10,
+        'kernel.gamma': 0.01,
         'preprocess.n_hiddens': [128, 128]}
     )
     # Expected performance: 0.9735
@@ -87,8 +87,6 @@ if __name__ == '__main__':
     # We can now fit the clf_rej
     clf_rej.preprocess.verbose = 1  # DEBUG
     clf_rej.fit(tr_sample.X, tr_sample.Y)
-
-    clf_rej.save('tsne_rej_no_threshold')
 
     # Set threshold (FPR: 10%)
     clf_rej.threshold = clf_rej.compute_threshold(0.1, ts_sample)

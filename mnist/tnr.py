@@ -9,9 +9,10 @@ from components.c_reducer_ptsne import CReducerPTSNE
 from mnist.cnn_mnist import cnn_mnist_model
 from mnist.fit_dnn import get_datasets
 
+# LOGFILE = 'tnr_best_params.log'
+
 
 N_TRAIN, N_TEST = 10000, 1000
-LOGFILE = 'tnr_best_params.log'
 if __name__ == '__main__':
     random_state = 999
 
@@ -29,26 +30,22 @@ if __name__ == '__main__':
     print("Model Accuracy: {}".format(acc_torch))
 
     # Create LD
-    tsne = CReducerPTSNE(epochs=250, batch_size=128, preprocess=None, random_state=random_state)
-    nmz = CNormalizerMinMax(preprocess=tsne)
-    LD = CClassifierMulticlassOVA(classifier=CClassifierKDE, kernel=CKernelRBF(), preprocess=nmz)
+    tsne = CReducerPTSNE(n_hiddens=[128, 128], epochs=500, batch_size=32, preprocess=None, random_state=random_state)
+    LD = CClassifierMulticlassOVA(classifier=CClassifierKDE, kernel=CKernelRBF(), preprocess=tsne)
 
     # Create DNR
-    layers = ['features:relu4', 'features:relu3', 'features:relu2']
+    layers = ['features:relu2', 'features:relu3', 'features:relu4']
     combiner = CClassifierMulticlassOVA(CClassifierSVM, kernel=CKernelRBF())
     layer_clf = LD
     tnr = CClassifierDNR(combiner, layer_clf, dnn, layers, -1000)
 
     # Setting layer classifiers parameters (separate xval)
     tnr.set_params({
-        'features:relu2.preprocess.preprocess.n_hiddens': [64, 64],
-        'features:relu2.kernel.gamma': 100,
-        'features:relu3.preprocess.preprocess.n_hiddens': [256, 256],
-        'features:relu3.kernel.gamma': 100,
-        'features:relu4.preprocess.preprocess.n_hiddens': [128, 128],
-        'features:relu4.kernel.gamma': 100,
-        'clf.C': 100,
-        'clf.kernel.gamma': 1
+        'features:relu2.kernel.gamma': 0.1,
+        'features:relu3.kernel.gamma': 0.1,
+        'features:relu4.kernel.gamma': 0.1,
+        'clf.C': 10,
+        'clf.kernel.gamma': 0.01
     })
 
     # Select 10K training data and 1K test data (sampling)
@@ -56,6 +53,14 @@ if __name__ == '__main__':
     tr_sample = vl[tr_idxs, :]
     ts_idxs = CArray.randsample(ts.X.shape[0], shape=N_TEST, random_state=random_state)
     ts_sample = ts[ts_idxs, :]
+
+    # DEBUG: CClassifierPTSNE Verbose
+    # [lcf.preprocess.__class__ for lcf in tnr._layer_clfs.values()]
+    # for lcf in tnr._layer_clfs.values():
+    #     lcf.preprocess.verbose = 1
+
+    # # Parallelize?
+    # tnr.n_jobs = 4
 
     # Fit DNR
     tnr.fit(tr_sample.X, tr_sample.Y)
@@ -71,4 +76,3 @@ if __name__ == '__main__':
 
     # Dump to disk
     tnr.save('tnr')
-

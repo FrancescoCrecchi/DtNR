@@ -11,16 +11,16 @@ class CClassifierKDEBayes(CClassifier):
         self.kernel = kernel
         self._model = KDEClassifier(bandwidth=self.bandwidth, kernel=self.kernel)
 
-    def _fit(self, dataset):
+    def _fit(self, X, y):
         # Unpack data
-        X, y = dataset.X.tondarray(), dataset.Y.tondarray()
+        X, y = X.tondarray(), y.tondarray()
         # Fit KDEClassifier
         self._model.fit(X, y)
 
         return self
 
-    def _forward(self, x):
-        pred = self._model.predict_proba(x.tondarray())
+    def _forward(self, X):
+        pred = self._model.predict_proba(X.tondarray())
         return CArray(pred)
 
     def _backward(self, w):
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     # Training a classifier
     clf = CClassifierKDEBayes(bandwidth='auto')
-    clf.fit(tr)
+    clf.fit(tr.X, tr.Y)
 
     # Compute predictions on a test set
     y_pred = clf.predict(ts.X)
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # Numerical gradient check
     from secml.ml.classifiers.tests.c_classifier_testcases import CClassifierTestCases
     CClassifierTestCases.setUpClass()
-    CClassifierTestCases()._test_gradient_numerical(clf, ts.X[0, :])
+    CClassifierTestCases()._test_gradient_numerical(clf, ts.X[10, :])
 
     print("done?")
 

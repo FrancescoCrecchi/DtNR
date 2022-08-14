@@ -1,5 +1,5 @@
 from secml.array import CArray
-from secml.ml import CKernelRBF, CNormalizerDNN, CNormalizerMinMax
+from secml.ml import CKernelRBF, CNormalizerDNN
 from secml.ml.classifiers.multiclass import CClassifierMulticlassOVA
 
 from components.c_classifier_kde import CClassifierKDE
@@ -7,7 +7,7 @@ from components.c_reducer_ptsne import CReducerPTSNE
 from mnist.cnn_mnist import cnn_mnist_model
 from mnist.fit_dnn import get_datasets
 
-LAYER = 'features:relu2'
+LAYER = 'features:relu4'
 LOGFILE = 'tnr_best_params.log'
 
 N_TRAIN, N_TEST = 10000, 1000
@@ -29,12 +29,11 @@ if __name__ == '__main__':
 
     # Create LD
     feat_extr = CNormalizerDNN(dnn, out_layer=LAYER)
-    tsne = CReducerPTSNE(epochs=250, batch_size=128, preprocess=feat_extr, random_state=random_state)
-    nmz = CNormalizerMinMax(preprocess=tsne)
-    clf = CClassifierMulticlassOVA(classifier=CClassifierKDE, kernel=CKernelRBF(), preprocess=nmz)
+    tsne = CReducerPTSNE(n_hiddens=[128, 128], epochs=500, batch_size=32, preprocess=feat_extr, random_state=random_state)
+    clf = CClassifierMulticlassOVA(classifier=CClassifierKDE, kernel=CKernelRBF(), preprocess=tsne)
 
     # Multiprocessing
-    clf.n_jobs = 16
+    clf.n_jobs = 1
 
     # Select 10K training data and 1K test data (sampling)
     tr_idxs = CArray.randsample(vl.X.shape[0], shape=N_TRAIN, random_state=random_state)
@@ -42,15 +41,18 @@ if __name__ == '__main__':
     ts_idxs = CArray.randsample(ts.X.shape[0], shape=N_TEST, random_state=random_state)
     ts_sample = ts[ts_idxs, :]
 
+    # # Xval
+    # def compute_hiddens(n_hiddens, n_layers):
+    #     return sum([[[l] * k for l in n_hiddens] for k in range(1, n_layers + 1)], [])
 
-    # Xval
-    def compute_hiddens(n_hiddens, n_layers):
-        return sum([[[l] * k for l in n_hiddens] for k in range(1, n_layers + 1)], [])
+    # Fit
+    tsne.verbose = 1
+    tsne.fit(tr_sample.X, tr_sample.Y)
 
-
+    # Model selection for kernel.gamma
     xval_params = {
-        'preprocess.preprocess.n_hiddens': compute_hiddens([64, 128, 256], 2),
-        'kernel.gamma': [0.1, 1, 10, 100]
+        # 'preprocess.preprocess.n_hiddens': compute_hiddens([64, 128, 256], 2),
+        'kernel.gamma': [0.001, 0.1, 1, 10, 100]
     }
 
     # Let's create a 3-Fold data splitter

@@ -1,4 +1,6 @@
 from secml.array import CArray
+from secml.data import CDataset
+from secml.figure import CFigure
 from secml.ml.classifiers.multiclass import CClassifierMulticlassOVA
 from secml.ml.features import CNormalizerDNN, CNormalizerMinMax
 from secml.ml.kernels import CKernelRBF
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     })
 
     # DEBUG
-    clf.n_jobs = 10
+    # clf.n_jobs = 10
 
     # Fit
     clf.fit(tr_sample.X, tr_sample.Y)
@@ -91,19 +93,19 @@ if __name__ == '__main__':
     print("Accuracy on test set: {:.2%}".format(ts_acc))
 
     # # --------- Plot ---------
-    # embds = clf.preprocess.transform(clf_tr.X)
+    # embds = clf.preprocess.transform(tr_sample.X)
     # clf.preprocess = None
     #
     # fig = CFigure(10, 12)
     # # Decision function
     # fig.sp.plot_decision_regions(clf, n_grid_points=200)
     # # Plot embds dataset
-    # foo_ds = CDataset(embds, clf_tr.Y)
+    # foo_ds = CDataset(embds, tr_sample.Y)
     # fig.sp.plot_ds(foo_ds, alpha=0.5)
     # # Extras
     # fig.sp.legend()
     # fig.sp.grid()
-    # fig.savefig('test_compose.png')
+    # fig.savefig('components/test_compose.png')
     #
     # # Restore preprocessing
     # clf.preprocess = nmz

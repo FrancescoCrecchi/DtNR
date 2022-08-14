@@ -7,7 +7,7 @@ from secml.ml.peval.metrics import CMetricAccuracyReject, CMetricAccuracy
 
 # PARAMETERS
 DSET = 'cifar10'
-EVAL_TYPE = 'bb'
+EVAL_TYPE = 'wb'
 
 # ------------------------------------------------------
 # CLFS = ['dnn', 'nr', 'dnr', 'tsne_rej', 'tnr']
@@ -20,7 +20,7 @@ EVAL_TYPE = 'bb'
 # CLFS = ['dnn', 'nr', 'dnr', 'rbf_net_sigma_0.000_250', 'deep_rbf_net_sigma_0.000_250', 'dnr_rbf']
 # CLFS = ['dnn',
 #         'nr',
-#         'rbfnet_nr_like_wd_0e+00',
+#         'rbfnet_nr_like_wd_0e+00',w
 #         # 'rbfnet_nr_like_wd_1e-03',
 #         # 'rbfnet_nr_like_wd_1e-04',
 #         # 'rbfnet_nr_like_wd_1e-05',
@@ -29,27 +29,44 @@ EVAL_TYPE = 'bb'
 #         # 'rbfnet_nr_like_wd_1e-10'
 #         ]
 
-if DSET == 'mnist':
-    # MNIST Final
-    CLFS = [
-        'dnn',
-        'nr',
-        'rbfnet_nr_like_10_wd_0e+00',
-        'dnr',
-        'dnr_rbf_tr_init',
-        # 'dnr_rbf_2x'
-    ]
-elif DSET == 'cifar10':
-    # CIFAR10 Final
-    CLFS = [
-        'dnn',
-        'nr',
-        'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init',
-        'dnr',
-        'dnr_rbf',
-        ]
-else:
-    raise ValueError("Unrecognized dataset!")
+# if DSET == 'mnist':
+#     # MNIST Final
+#     CLFS = [
+#         'dnn',
+#         'nr',
+#         'rbfnet_nr_like_10_wd_0e+00',
+#         'dnr_asotgiu',
+#         'dnr_rbf_tr_init',
+#         # 'dnr_rbf_2x',
+#     ]
+# elif DSET == 'cifar10':
+#     # CIFAR10 Final
+#     CLFS = [
+#         'dnn',
+#         'nr',
+#         'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init',
+#         'dnr',
+#         'dnr_rbf_tr_init',
+#         ]
+# else:
+#     raise ValueError("Unrecognized dataset!")
+
+# CLFS = ['adv_reg_dnn_sigma_0e+00', 'adv_reg_dnn_sigma_1e+03']
+# if DSET == 'mnist':
+#     CLFS = ['dnn',
+#             'nr', 'dnr',
+#             'rbfnet_nr_like_10_wd_0e+00',
+#             'shallow_fader']
+# else:
+#     CLFS = ['dnn',
+#             'nr', 'dnr',
+#             'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init',
+#             'shallow_fader']
+
+# CLFS = ['dnn', 'nr', 'dnr_asotgiu']
+# CLFS = ['dnn', 'nr', 'tsne_rej']
+# CLFS = ['dnn', 'dnr', 'tnr']
+CLFS = ['dnn', 'nr', 'dnr', 'tsne_rej', 'tnr']
 
 if DSET == 'mnist':
     EPS = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
@@ -60,23 +77,68 @@ elif DSET == 'cifar10':
 else:
     raise ValueError('Unknown dataset!')
 
-N_ITER = 3      # TODO: RESTORE THIS!
+N_ITER = 2     # TODO: RESTORE THIS!
 
 # FNAME = 'all_'+EVAL_TYPE+'_seval'
 # FNAME = 'svm_vs_rbf_nr_like'
-FNAME = EVAL_TYPE
+# FNAME = EVAL_TYPE
 # FNAME = 'dnr_rbf_test'
+# FNAME = 'adv_reg_dnn_test'
+# FNAME = 'fader'
+# FNAME = 'buttando_giu_dnr'
+# FNAME = 'tsne_rej_'+EVAL_TYPE+'_seval'
+# FNAME = 'tnr_'+EVAL_TYPE+'_seval'
+FNAME = 'esann19_'+EVAL_TYPE+'_seval'
 
 # DSET = os.path.join(DSET, 'ablation_study')
 # EXTENSION = 'png'
 EXTENSION = 'pdf'
 
+# COLORS = {
+#     'DNN':'tab:blue',
+#     'NR':'tab:orange',
+#     'NR-RBF': 'tab:green',
+#     'DNR': 'tab:red',
+#     'DNR-RBF': 'tab:purple',
+# }
+
+# COLORS = {
+#     'ADV_REG_DNN_SIGMA_0E+00': 'tab:blue',
+#     'ADV_REG_DNN_SIGMA_1E+03': 'tab:orange'
+# }
+
+# COLORS = {
+#     'DNN':'tab:blue',
+#     'NR': 'tab:orange',
+#     'DNR': 'tab:green',
+#     'NR-RBF': 'tab:cyan',
+#     'SHALLOW_FADER': 'tab:red'
+# }
+
+# COLORS = {
+#     'DNN':'tab:blue',
+#     'NR': 'tab:orange',
+#     'DNR': 'tab:green'
+# }
+
+# COLORS = {
+#     'DNN':'tab:blue',
+#     'NR': 'tab:orange',
+#     '$t$-NR': 'tab:green'
+# }
+
+# COLORS = {
+#     'DNN':'tab:blue',
+#     'DNR': 'tab:orange',
+#     'D$t$-NR': 'tab:green'
+# }
+
 COLORS = {
     'DNN':'tab:blue',
-    'NR':'tab:orange',
-    'NR-RBF': 'tab:green',
-    'DNR': 'tab:red',
-    'DNR-RBF': 'tab:purple'
+    'NR': 'tab:orange',
+    'DNR': 'tab:green',
+    '$t$-NR': 'tab:red',
+    'D$t$-NR': 'tab:purple'
 }
 
 # ------------------------------------------------------
@@ -174,14 +236,15 @@ if __name__ == '__main__':
         # elif clf == 'rbfnet_nr_like_wd_0e+00':
         #     label = 'rbfnet_nr_like_no_reg'
         elif 'rbfnet' in clf or 'rbf_net' in clf:
-            label = 'nr-rbf'
-        elif 'dnr_rbf' in clf:
-            label = 'dnr-rbf'
+            label = 'NR-RBF'
+        elif clf == 'dnr_rbf_tr_init':
+            label = 'DNR-RBF'
+        elif clf == 'dnr_asotgiu':
+            label = 'DNR'
         # DEBUG: ========================
         else:
-            label = clf
+            label = clf.upper()
 
-        label = label.upper()
         print(" - Plotting ", label)
 
         # Plot performance

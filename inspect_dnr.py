@@ -3,14 +3,15 @@ import os
 from secml.ml.classifiers.reject import CClassifierDNR
 from secml.ml.peval.metrics import CMetricAccuracy
 
-# DATASET = 'mnist'
-DATASET = 'cifar10'
+DATASET = 'mnist'
+# DATASET = 'cifar10'
 
 # CLF = 'dnr'
 # CLF = 'hybrid_rbfnet_svm'
-CLF = 'dnr_rbf'
+# CLF = 'dnr_rbf'
 # CLF = 'dnr_rbf_tr_init'
 # CLF = 'dnr_rbf_2x'
+CLF = 'tnr'
 
 # Load data
 random_state = 999
@@ -26,7 +27,6 @@ _, vl, ts = get_datasets(random_state)
 
 # Load DNR
 dnr = CClassifierDNR.load(os.path.join(DATASET, CLF + '.gz'))
-
 
 # Check test performance
 def evaluate_clf(clf):

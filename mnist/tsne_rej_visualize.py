@@ -44,6 +44,7 @@ if __name__ == '__main__':
     # HACK: Detach from preprocess to plot
     preproc = clf_rej.preprocess.copy()
     clf_rej.preprocess = None
+
     # preproc = clf_rej.clf.preprocess.preprocess.copy()
     # clf_rej.clf.preprocess.preprocess = None
 
@@ -55,9 +56,10 @@ if __name__ == '__main__':
                                  n_grid_points=100)
     fig.sp.plot_ds(adv_ds_2d)
 
+    # Dump to disk
+    # fig.savefig('tsne_rej_visualize')
+    fig.savefig('tsne_rej_visualize_relu2')
+    # fig.savefig('tsne_nr_visualize')
+
     clf_rej.preprocess = preproc
     # clf_rej.clf.preprocess.preprocess = preproc
-
-    # Dump to disk
-    fig.savefig('tsne_rej_visualize')
-    # fig.savefig('tsne_nr_visualize')

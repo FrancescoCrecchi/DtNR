@@ -8,9 +8,12 @@ from secml.ml.classifiers.reject import CClassifierRejectThreshold
 EPS = 4.0
 N_TEST = 1000
 
-def load_adv_ds(i):
-    seval_data = CSecEval.load('dnn_wb_seval_it_%d.gz' % i).sec_eval_data
-    eps_idx = seval_data.param_values.tolist().index(EPS)
+
+def load_adv_ds(fmt_string, i, eps):
+    # seval_data = CSecEval.load('dnn_wb_seval_it_%d.gz' % i).sec_eval_data
+    # seval_data = CSecEval.load('dnn_wb_seval_it_%d.gz' % i).sec_eval_data
+    seval_data = CSecEval.load(fmt_string % i).sec_eval_data
+    eps_idx = seval_data.param_values.tolist().index(eps)
     X_adv, Y_rej = seval_data.adv_ds[eps_idx].X, seval_data.Y_pred[eps_idx]
     return CDataset(X_adv, Y_rej)
 
@@ -18,19 +21,19 @@ if __name__ == '__main__':
     random_state = 999
 
     # 1. Load clf_rej
-    clf_rej = CClassifierRejectThreshold.load('tsne_rej.gz')
+    # clf_rej = CClassifierRejectThreshold.load('tsne_rej.gz')
     ptsne = clf_rej.preprocess
 
-    # Load natural points
-    from mnist.fit_dnn import get_datasets
-    _, _, ts = get_datasets(random_state)
-    ts_idxs = CArray.randsample(ts.X.shape[0], shape=N_TEST, random_state=random_state)
-    nat_ds = ts[ts_idxs, :]
+    # # Load natural points
+    # from mnist.fit_dnn import get_datasets
+    # _, _, ts = get_datasets(random_state)
+    # ts_idxs = CArray.randsample(ts.X.shape[0], shape=N_TEST, random_state=random_state)
+    # nat_ds = ts[ts_idxs, :]
 
-    # 2. Load attack points
-    adv_ds = load_adv_ds(0)
-    for i in range(1, 3):
-        adv_ds = adv_ds.append(load_adv_ds(i))
+    # # 2. Load attack points
+    # adv_ds = load_adv_ds(0)
+    # for i in range(1, 3):
+    #     adv_ds = adv_ds.append(load_adv_ds(i))
 
     # Setup
     preproc = clf_rej.preprocess.copy()
@@ -58,10 +61,11 @@ if __name__ == '__main__':
     #     fig.sp.plot_ds(ds_2d)
 
     # Label adversarial labels starting from n_classes
-    adv_ds.Y += nat_ds.num_classes
+    # adv_ds.Y[adv_ds.Y == -1] = clf_rej.n_classes
 
     # Concatenate datasets
-    cat_ds = nat_ds.append(adv_ds)
+    # cat_ds = nat_ds.append(adv_ds)
+    cat_ds = adv_ds
 
     # Pass through ptSNE to obtain a 2d plot
     X_2d = ptsne.forward(cat_ds.X)
@@ -75,6 +79,10 @@ if __name__ == '__main__':
                                  n_grid_points=100)
 
     fig.sp.plot_ds(ds_2d)
-    fig.savefig('tsne_rej_inspect')
+    fig.title("$t$-SNE Reject - dmax: {:.2f}".format(EPS))
+
+    # fig.savefig('tsne_rej_inspect')
+    # fig.savefig('tsne_rej_inspect_WB')
+    fig.savefig('tsne_rej_inspect_ADV_TRAIN')
 
     clf_rej.preprocess = preproc

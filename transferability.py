@@ -25,26 +25,31 @@ def transfer_attack(clf, seval_data):
 
 
 DSET = 'mnist'
+# DSET = 'cifar10'
+
+# CLFS = ['tsne_rej']
+CLFS = ['tnr']
 # CLFS = ['nr', 'dnr', 'tsne_rej', 'tnr']
 
-if DSET == 'mnist':
-    # MNIST Final
-    CLFS = [
-        'nr',
-        'rbfnet_nr_like_10_wd_0e+00',
-        'dnr',
-        'dnr_rbf_tr_init'
-        ]
-elif DSET == 'cifar10':
-    # CIFAR10 Final
-    CLFS = [
-        'nr',
-        'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init',
-        'dnr',
-        'dnr_rbf'
-        ]
-else:
-    raise ValueError("Unrecognized dataset!")
+# if DSET == 'mnist':
+#     # MNIST Final
+#     CLFS = [
+#         # 'nr',
+#         # 'rbfnet_nr_like_10_wd_0e+00',
+#         # 'dnr',
+#         # 'dnr_rbf_tr_init',
+#         'dnr_rbf_2x'
+#         ]
+# elif DSET == 'cifar10':
+#     # CIFAR10 Final
+#     CLFS = [
+#         # 'nr',
+#         # 'rbf_net_nr_sv_100_wd_0e+00_cat_hinge_tr_init',
+#         # 'dnr',
+#         'dnr_rbf_tr_init'
+#         ]
+# else:
+#     raise ValueError("Unrecognized dataset!")
 
 N_ITER = 3
 if __name__ == '__main__':
